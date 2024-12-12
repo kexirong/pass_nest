@@ -49,63 +49,65 @@ class GroupsView extends StatelessWidget {
 
           var groups = controller.groups;
 
-          return ListView.separated(
-            itemCount: groups.length + 1,
-            itemBuilder: (BuildContext context, int index) {
-              AccountGroup? group;
-              if (index > 0) {
-                group = AccountGroup.copy(groups[index - 1]);
-              }
+          return SlidableAutoCloseBehavior(
+            child: ListView.separated(
+              itemCount: groups.length + 1,
+              itemBuilder: (BuildContext context, int index) {
+                AccountGroup? group;
+                if (index > 0) {
+                  group = AccountGroup.copy(groups[index - 1]);
+                }
 
-              return Slidable(
-                // The end action pane is the one at the right or the bottom side.
-                endActionPane: ActionPane(
-                  motion: const ScrollMotion(),
-                  children: [
-                    SlidableAction(
-                      onPressed: (_) async {
-                        if (group == null) return;
-                        var result = await Get.toNamed(Paths.groupAction, arguments: group);
+                return Slidable(
+                  // The end action pane is the one at the right or the bottom side.
+                  endActionPane: ActionPane(
+                    motion: const ScrollMotion(),
+                    children: [
+                      SlidableAction(
+                        onPressed: (_) async {
+                          if (group == null) return;
+                          var result = await Get.toNamed(Paths.groupAction, arguments: group);
 
-                        if (result is AccountGroup) {
-                          controller.updateGroup(result);
-                        }
-                      },
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.surface,
-                      icon: Icons.edit,
-                      label: '编辑',
-                    ),
-                    SlidableAction(
-                      onPressed: (_) {
-                        if (group != null) {
-                          controller.deleteGroup(group);
-                        }
-                      },
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: colorScheme.surface,
-                      icon: Icons.delete,
-                      label: '删除',
-                    ),
-                  ],
-                ),
-
-                child: ListTile(
-                  title: Text(group?.name ?? '默认'),
-                  subtitle: Text(
-                    group == null ? '默认组不可删除编辑' : group.description ?? '',
-                    style: TextStyle(color: colorScheme.outline),
+                          if (result is AccountGroup) {
+                            controller.updateGroup(result);
+                          }
+                        },
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.surface,
+                        icon: Icons.edit,
+                        label: '编辑',
+                      ),
+                      SlidableAction(
+                        onPressed: (_) {
+                          if (group != null) {
+                            controller.deleteGroup(group);
+                          }
+                        },
+                        backgroundColor: colorScheme.error,
+                        foregroundColor: colorScheme.surface,
+                        icon: Icons.delete,
+                        label: '删除',
+                      ),
+                    ],
                   ),
-                  onTap: () {
-                    Get.toNamed(Paths.accountsWithGroupID,
-                        parameters: {'group_id': '${group?.id}'});
-                  },
-                ),
-              );
-            },
-            separatorBuilder: (BuildContext context, int index) {
-              return const Divider(height: 0);
-            },
+
+                  child: ListTile(
+                    title: Text(group?.name ?? '默认'),
+                    subtitle: Text(
+                      group == null ? '默认组不可删除编辑' : group.description ?? '',
+                      style: TextStyle(color: colorScheme.outline),
+                    ),
+                    onTap: () {
+                      Get.toNamed(Paths.accountsWithGroupID,
+                          parameters: {'group_id': '${group?.id}'});
+                    },
+                  ),
+                );
+              },
+              separatorBuilder: (BuildContext context, int index) {
+                return const Divider(height: 0);
+              },
+            ),
           );
         },
       ),

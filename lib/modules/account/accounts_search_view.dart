@@ -108,17 +108,15 @@ class AccountsSearchView extends StatelessWidget {
               }
               switch (event) {
                 case (AccountEvent.tap):
-                  await Get.dialog(AccountDetailWidget(
-                    account: account as PlainAccount,
-                  ));
+                  await Get.dialog(AccountDetailWidget(account: acct));
                 case (AccountEvent.update):
-                  var result = await Get.toNamed(Paths.accountAction, arguments: account);
+                  var result = await Get.toNamed(Paths.accountAction, arguments: acct);
                   if (result is PlainAccount) {
-                    await controller.updateAccount(account);
+                    await controller.updateAccount(result);
                     Get.rawSnackbar(message: '保存成功');
                   }
                 case (AccountEvent.delete):
-                  await controller.deleteAccount(account);
+                  await controller.deleteAccount(acct);
                   Get.rawSnackbar(message: '删除成功');
               }
             },

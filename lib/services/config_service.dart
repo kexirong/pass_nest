@@ -10,7 +10,7 @@ import 'db/data_provider.dart';
 class ConfigService extends GetxService {
   final _dataProvider = Get.find<DataProviderService>();
 
-  final _secretsConfig = <SecretConfig>[];
+  // final _secretsConfig = <SecretConfig>[];
   final _secretsCache = <String, SecretConfig>{};
   late final String _deviceID;
 
@@ -20,7 +20,7 @@ class ConfigService extends GetxService {
 
   WebdavConfig? get webdavConfig => _webdavConfig;
 
-  List<SecretConfig> get secretsConfig => _secretsConfig;
+  List<SecretConfig> get secretsConfig => _secretsCache.values.toList();
 
   Future<void> init() async {
     await loadDeviceID();
@@ -38,7 +38,7 @@ class ConfigService extends GetxService {
 
   Future<void> loadSecretsConfig() async {
     var secrets = await _dataProvider.getSecrets();
-    _secretsConfig.addAll(secrets);
+    // _secretsConfig.addAll(secrets);
     for (var s in secrets) {
       var mKey_ = md5.convert(utf8.encode(s.secret)).toString();
       _secretsCache[mKey_] = s;
@@ -53,7 +53,7 @@ class ConfigService extends GetxService {
   }
 
   SecretConfig? _getMainSecret() {
-    for (var s in _secretsConfig) {
+    for (var s in secretsConfig) {
       if (s.isMain) {
         return s;
       }
@@ -72,25 +72,22 @@ class ConfigService extends GetxService {
       mSecret.isMain = false;
     }
     var newSecret = SecretConfig(secret, isMain: true);
-    _secretsConfig.add(newSecret);
     var mKey = md5.convert(utf8.encode(secret)).toString();
     _secretsCache[mKey] = newSecret;
-    await _dataProvider.setSecrets(_secretsConfig);
+    await _dataProvider.setSecrets(secretsConfig);
   }
 
   Future<void> addSecret(String secret) async {
     var newSecret = SecretConfig(secret);
-    _secretsConfig.add(newSecret);
     var mKey = md5.convert(utf8.encode(secret)).toString();
     _secretsCache[mKey] = newSecret;
 
-    await _dataProvider.setSecrets(_secretsConfig);
+    await _dataProvider.setSecrets(secretsConfig);
   }
 
   Future<void> deleteSecret(String secret) async {
-    _secretsConfig.removeWhere((e) => e.secret == secret);
     var mKey = md5.convert(utf8.encode(secret)).toString();
     _secretsCache.remove(mKey);
-    await _dataProvider.setSecrets(_secretsConfig);
+    await _dataProvider.setSecrets(secretsConfig);
   }
 }

@@ -10,8 +10,10 @@ class SecretController extends GetxController {
   late final TextEditingController oldMainSecret;
 
   late final TextEditingController newMainSecret;
+  late final TextEditingController confirmNewMainSecret;
 
-  List<SecretConfig> get secrets => _configService.secretsConfig;
+  List<SecretConfig> get attSecrets =>
+      _configService.secretsConfig.where((s) => !s.isMain).toList();
 
   String? get mainSecret => _configService.mainSecret;
 
@@ -19,11 +21,18 @@ class SecretController extends GetxController {
     await _configService.setMainSecret(secret);
   }
 
+  void reset() {
+    oldMainSecret.text = '';
+    newMainSecret.text = '';
+    confirmNewMainSecret.text = '';
+    update();
+  }
+
   @override
   void onInit() {
     oldMainSecret = TextEditingController();
     newMainSecret = TextEditingController();
-
+    confirmNewMainSecret = TextEditingController();
     super.onInit();
   }
 

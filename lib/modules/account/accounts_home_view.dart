@@ -65,13 +65,8 @@ class AccountsHomeView extends StatelessWidget {
         builder: (controller) {
           PlainAccount? decryptAccount(BaseAccount account) {
             if (account is EncryptAccount) {
-              print('account ${account.id}   start decrypt  ');
-
               var secret = controller.getSecret(account.mKey);
-
-              print('get secret by ${account.mKey} :$secret');
               if (secret != null) {
-                print('account ${account.id} decrypt complete ');
                 return account.decrypt(secret);
               }
               return null;

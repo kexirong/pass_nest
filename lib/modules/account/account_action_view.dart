@@ -61,58 +61,60 @@ class AccountActionView extends StatelessWidget {
             ),
           ],
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: GetBuilder<AccountActionController>(
-                builder: (c) => Form(
-                  key: _formKey,
-                  child: Column(
-                    children: _buildFormField(context, c),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: GetBuilder<AccountActionController>(
+                  builder: (c) => Form(
+                    key: _formKey,
+                    child: Column(
+                      children: _buildFormField(context, c),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: OverflowBar(
-                alignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  OutlinedButton(
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: OverflowBar(
+                  alignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    OutlinedButton(
+                        onPressed: () {
+                          Get.dialog(const GenPasswordDialog());
+                        },
+                        child: const Text(
+                          "随机密码",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16),
+                        )),
+                    OutlinedButton(
                       onPressed: () {
-                        Get.dialog(const GenPasswordDialog());
+                        controller.reset();
+                        Get.rawSnackbar(message: 'ok');
                       },
                       child: const Text(
-                        "随机密码",
+                        "重置",
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 16),
-                      )),
-                  OutlinedButton(
-                    onPressed: () {
-                      controller.reset();
-                      Get.rawSnackbar(message: 'ok');
-                    },
-                    child: const Text(
-                      "重置",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
+                      ),
                     ),
-                  ),
-                  OutlinedButton(
-                    onPressed: () {
-                      controller.addExtendField();
-                    },
-                    child: const Text(
-                      "添加字段",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
+                    OutlinedButton(
+                      onPressed: () {
+                        controller.addExtendField();
+                      },
+                      child: const Text(
+                        "添加字段",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            )
-          ],
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -216,7 +218,6 @@ class AccountActionView extends StatelessWidget {
           Expanded(
             flex: 3,
             child: TextFormField(
-              autofocus: false,
               decoration: const InputDecoration(
                 border: UnderlineInputBorder(),
               ),
@@ -240,6 +241,7 @@ class AccountActionView extends StatelessWidget {
           Expanded(
             flex: 3,
             child: TextFormField(
+              obscureText: true,
               decoration: const InputDecoration(
                 border: UnderlineInputBorder(),
               ),
@@ -288,7 +290,6 @@ class AccountActionView extends StatelessWidget {
             Expanded(
               flex: 3,
               child: TextFormField(
-                autofocus: false,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
                 ),
