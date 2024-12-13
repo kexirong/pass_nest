@@ -10,26 +10,25 @@ import 'db/data_provider.dart';
 class ConfigService extends GetxService {
   final _dataProvider = Get.find<DataProviderService>();
 
-  // final _secretsConfig = <SecretConfig>[];
   final _secretsCache = <String, SecretConfig>{};
   late final String _deviceID;
 
-  WebdavConfig? _webdavConfig;
-
   String get deviceID => _deviceID;
-
-  WebdavConfig? get webdavConfig => _webdavConfig;
 
   List<SecretConfig> get secretsConfig => _secretsCache.values.toList();
 
   Future<void> init() async {
     await loadDeviceID();
-    await loadWebdavConfig();
+
     await loadSecretsConfig();
   }
 
-  Future<void> loadWebdavConfig() async {
-    _webdavConfig = await _dataProvider.getWebdavConfig();
+  Future<WebdavConfig?> getWebdavConfig() async {
+    return await _dataProvider.getWebdavConfig();
+  }
+
+  Future<void> setWebdavConfig(WebdavConfig conf) async {
+    await _dataProvider.setWebdavConfig(conf);
   }
 
   Future<void> loadDeviceID() async {

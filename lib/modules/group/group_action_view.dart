@@ -55,24 +55,21 @@ class GroupActionView extends StatelessWidget {
                   return;
                 }
 
-                Get.back(result: controller.assignGroup(group));
+                Get.back(result: controller.assignToGroup(group));
               },
             ),
           ],
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: GetBuilder<GroupActionController>(
-                  builder: (c) => Form(
-                        key: _formKey,
-                        child: Column(
-                          children: _buildFormField(context, c),
-                        ),
-                      )),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: GetBuilder<GroupActionController>(
+            builder: (c) => Form(
+              key: _formKey,
+              child: Column(
+                children: _buildFormField(context, c),
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -34,8 +34,8 @@ class AccountsService extends GetxService {
     return _configService.getSecret(mKey);
   }
 
-  BaseAccount getAccountByID(String id) {
-    return _accounts.firstWhere((element) => element.id == id);
+  BaseAccount? getAccountByID(String id) {
+    return _accounts.firstWhereOrNull((element) => element.id == id);
   }
 
   Future<void> addAccount(BaseAccount account) async {

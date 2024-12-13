@@ -92,7 +92,7 @@ class GroupsView extends StatelessWidget {
                   ),
 
                   child: ListTile(
-                    title: Text(group?.name ?? '默认'),
+                    title: Text('${group?.name ?? '默认'} (${controller.accountCount(group?.id)})'),
                     subtitle: Text(
                       group == null ? '默认组不可删除编辑' : group.description ?? '',
                       style: TextStyle(color: colorScheme.outline),

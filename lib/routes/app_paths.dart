@@ -12,4 +12,5 @@ abstract class Paths {
   static const groupAction = '/group_action/';
 
   static const settingSecret = '/setting/secret';
+  static const settingWebdav = '/setting/webdav';
 }

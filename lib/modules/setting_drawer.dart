@@ -9,14 +9,9 @@ class SettingDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      // Add a ListView to the drawer. This ensures the user can scroll
-      // through the options in the drawer if there isn't enough vertical
-      // space to fit everything.
       child: ListView(
-        // Important: Remove any padding from the ListView.
         padding: EdgeInsets.zero,
         children: [
-
           const DrawerHeader(
             padding: EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 8.0),
             decoration: BoxDecoration(),
@@ -35,15 +30,14 @@ class SettingDrawer extends StatelessWidget {
             leading: const Icon(Icons.sync),
             title: const Text('同步'),
             onTap: () {
-
+              Get.toNamed(Paths.settingWebdav);
             },
           ),
           const Divider(height: 0),
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('关于'),
-            onTap: () {
-            },
+            onTap: () {},
           ),
         ],
       ),

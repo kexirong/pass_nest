@@ -33,10 +33,20 @@ class SyncWebdav extends GetxService {
     return lastTime.add(_duration);
   }
 
-  WebdavClient? get _client {
-    var conf = _configService.webdavConfig;
+  WebdavClient? _client;
+
+  Future<WebdavClient?> get client async {
+    if (_client != null && !(_client!.isClose)) {
+      return _client;
+    }
+    return await _getClient();
+  }
+
+  Future<WebdavClient?> _getClient() async {
+    var conf = await _configService.getWebdavConfig();
     if (conf == null) return null;
-    return WebdavClient(conf.url, conf.user, conf.password, path: conf.path, debug: false);
+    _client = WebdavClient(conf.url, conf.user, conf.password, path: conf.path);
+    return _client;
   }
 
   void start({Duration? duration}) {
@@ -75,6 +85,8 @@ class SyncWebdav extends GetxService {
   }
 
   Future<bool> sync() async {
+    var client_ = await client;
+    if (client_ == null) return false;
     try {
       if (!isInit || isRunning) {
         if (kDebugMode) {
@@ -82,22 +94,21 @@ class SyncWebdav extends GetxService {
         }
         return false;
       }
-      if (_client == null) return false;
 
-      if (await hasLock()) return false;
+      if (await hasLock(client_)) return false;
       isRunning = true;
 
-      await lock();
+      await lock(client_);
 
       var records = await _dataProvider.getChangeRecords();
       var lzRecords = zipRecords(records);
-      var ret = await _client!.download('change_records_mate');
+      var ret = await client_.download('change_records_mate');
       var cRecords = _toRecords(json.decode(ret));
 
       var downWait = diffRecords(lzRecords, cRecords);
       var upWait = diffRecords(cRecords, lzRecords);
       for (var down in downWait) {
-        var itemStr = await _client!.download("${down.itemType.name}_${down.id}");
+        var itemStr = await client_.download("${down.itemType.name}_${down.id}");
         var item = jsonDecode(itemStr);
         switch (down.itemType) {
           case ItemType.group:
@@ -117,16 +128,18 @@ class SyncWebdav extends GetxService {
         String dataStr;
         switch (up.itemType) {
           case ItemType.group:
+            //need fix
             dataStr = _groupsService.getGroupByID(up.id).toString();
 
           case ItemType.account:
+            //need fix
             dataStr = _accountsService.getAccountByID(up.id).toString();
         }
-        await _client!.upload("${up.itemType.name}_${up.id}", dataStr);
+        await client_.upload("${up.itemType.name}_${up.id}", dataStr);
       }
       var uRecords = lzRecords.values.toList();
       uRecords.addAll(upWait);
-      await _client!.upload("change_records_mate", jsonEncode(uRecords));
+      await client_.upload("change_records_mate", jsonEncode(uRecords));
 
       return true;
     } catch (e) {
@@ -135,14 +148,14 @@ class SyncWebdav extends GetxService {
       }
       return false;
     } finally {
-      await unlock();
+      await unlock(client_);
       isRunning = false;
     }
   }
 
-  Future<bool> hasLock() async {
+  Future<bool> hasLock(WebdavClient client) async {
     try {
-      var ret = await _client!.download(lockFile);
+      var ret = await client.download(lockFile);
       var jRet = json.decode(ret);
       int expired = jRet['expired'];
       if (DateTime.now().millisecondsSinceEpoch > expired) {
@@ -156,18 +169,18 @@ class SyncWebdav extends GetxService {
     return true;
   }
 
-  Future<void> lock() async {
+  Future<void> lock(WebdavClient client) async {
     var deviceID = _configService.deviceID;
 
     var lockData = <String, dynamic>{
       'device_id': deviceID,
       'expired': DateTime.now().add(_duration).millisecondsSinceEpoch,
     };
-    await _client!.upload(lockFile, json.encode(lockData));
+    await client.upload(lockFile, json.encode(lockData));
   }
 
-  Future<void> unlock() async {
-    await _client!.remove(lockFile);
+  Future<void> unlock(WebdavClient client) async {
+    await client.remove(lockFile);
   }
 }
 

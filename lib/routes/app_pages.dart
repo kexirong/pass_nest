@@ -7,6 +7,7 @@ import '../modules/setting/secret_view.dart';
 
 import '../modules/account/accounts_home_view.dart';
 import '../modules/account/account_action_view.dart';
+import '../modules/setting/sync_view.dart';
 
 part 'app_paths.dart';
 
@@ -43,6 +44,10 @@ class AppPages {
     GetPage(
       name: Paths.settingSecret,
       page: () => SettingSecret(),
+    ),
+    GetPage(
+      name: Paths.settingWebdav,
+      page: () => SettingSync(),
     ),
   ];
 }

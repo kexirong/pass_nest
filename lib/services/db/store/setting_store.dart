@@ -11,6 +11,7 @@ class SettingStore {
   final _webdavField = 'webdav';
   final _deviceIDField = 'device_id';
   final _secretsField = 'secrets';
+  final _syncMethodField = 'sync_method';
 
   final StoreRef<String, String> _store = StoreRef<String, String>(storeName);
 
@@ -59,6 +60,14 @@ class SettingStore {
   Future<String> setWebdavConfig(DatabaseClient dbc, WebdavConfig wc) async {
     var wcStr = jsonEncode(wc);
     return await _store.record(_webdavField).put(dbc, wcStr);
+  }
+
+  Future<String?> getSyncMethod(DatabaseClient dbc) async {
+    return await _store.record(_syncMethodField).get(dbc);
+  }
+
+  Future<String> setSyncMethod(DatabaseClient dbc, String method) async {
+    return await _store.record(_syncMethodField).put(dbc, method);
   }
 
   Future<List<RecordSnapshot<String, String>>> getAll(DatabaseClient dbc) async {

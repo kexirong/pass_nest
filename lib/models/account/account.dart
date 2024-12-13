@@ -46,7 +46,7 @@ class BaseAccount {
     if (this is EncryptAccount) {
       return '***未解密***';
     }
-    return (this as PlainAccount).username ?? '';
+    return (this as PlainAccount).username;
   }
 }
 
@@ -134,7 +134,7 @@ class EncryptAccount extends BaseAccount {
 
   EncryptAccount.fromJson(super.json)
       : cipher = json['cipher'],
-        mode = AESMode.values.firstWhere((el) => el.name == json['mode']),
+        mode = AESMode.values.firstWhere((e) => e.name == json['mode'], orElse: () => AESMode.cbc),
         iv = json['iv'],
         mKey = json['m_key'],
         encryptedAt = json['encrypted_at'],

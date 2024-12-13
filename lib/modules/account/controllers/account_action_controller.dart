@@ -73,7 +73,7 @@ class AccountActionController extends GetxController {
     update();
   }
 
-  PlainAccount assignAccount(PlainAccount? account) {
+  PlainAccount assignToAccount(PlainAccount? account) {
     if (account == null) {
       account = PlainAccount(title.text.trim(), username.text.trim(), password.text.trim());
     } else {

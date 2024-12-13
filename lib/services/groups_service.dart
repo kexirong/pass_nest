@@ -27,8 +27,8 @@ class GroupsService extends GetxService {
     _groups.add(group);
   }
 
-  AccountGroup getGroupByID(String id) {
-    return _groups.firstWhere((element) => element.id == id);
+  AccountGroup? getGroupByID(String id) {
+    return _groups.firstWhereOrNull((element) => element.id == id);
   }
 
   Future<void> updateGroup(AccountGroup group) async {

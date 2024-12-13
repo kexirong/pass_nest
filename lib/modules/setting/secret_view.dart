@@ -126,7 +126,18 @@ class SettingSecret extends StatelessWidget {
                               ),
                               title: Text(obscured.value ? '*******' : attSecrets[index].secret),
                               trailing: GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  Get.defaultDialog(
+                                      title: '请确认',
+                                      textConfirm: '确认',
+                                      textCancel: '取消',
+                                      buttonColor: colorScheme.error,
+                                      onConfirm: () async {
+                                        await controller.deleteSecret(attSecrets[index].secret);
+                                        Get.back();
+                                      },
+                                      middleText: "确认删除此密钥？");
+                                },
                                 child: Icon(Icons.remove_circle_outline, color: colorScheme.error),
                               ),
                             ),
@@ -139,8 +150,34 @@ class SettingSecret extends StatelessWidget {
                         children: <Widget>[
                           TextButton(
                             child: const Text('添加'),
-                            onPressed: () {
-                              /* ... */
+                            onPressed: () async {
+                              var inputSecret = TextEditingController();
+                              var result = await Get.dialog(AlertDialog(
+                                title: const Text('添加附加密钥'),
+                                content: TextField(
+                                  controller: inputSecret,
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text("取消"),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                  TextButton(
+                                    child: const Text("确认"),
+                                    onPressed: () {
+                                      if (inputSecret.text.trim().isEmpty) {
+                                        Get.rawSnackbar(message: '密钥不能为空');
+                                        return;
+                                      }
+                                      Get.back(result: inputSecret.text.trim());
+                                    },
+                                  ),
+                                ],
+                              ));
+                              if (result is String) {
+                                await controller.addSecret(result);
+                                Get.rawSnackbar(message: '添加成功');
+                              }
                             },
                           ),
                         ],

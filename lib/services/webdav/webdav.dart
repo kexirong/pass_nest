@@ -6,6 +6,9 @@ class WebdavClient {
   final webdav.Client _client;
 
   String rootPath = '';
+  bool _isClose = false;
+
+  bool get isClose => _isClose;
 
   WebdavClient(
     String url,
@@ -58,6 +61,10 @@ class WebdavClient {
     path ??= rootPath;
     var fPath = p.join(path, name);
     return await _client.removeAll(fPath);
+  }
+
+  void close() {
+    _isClose = true;
   }
 
   webdav.Client get client => _client;

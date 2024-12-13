@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-
-
 class SecretConfig {
   bool isMain;
   String secret;

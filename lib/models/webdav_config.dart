@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+enum SyncMethod { off, webdav }
+
 class WebdavConfig {
   String url;
   String user;
@@ -15,11 +17,11 @@ class WebdavConfig {
         path = json['path'];
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'url': url,
-    'user': user,
-    'password': password,
-    'path': path,
-  };
+        'url': url,
+        'user': user,
+        'password': password,
+        'path': path,
+      };
 
   @override
   String toString() {

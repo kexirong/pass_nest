@@ -31,7 +31,7 @@ class GroupActionController extends GetxController {
     update();
   }
 
-  AccountGroup assignGroup(AccountGroup? group) {
+  AccountGroup assignToGroup(AccountGroup? group) {
     if (group == null) {
       group = AccountGroup(name.text.trim());
     } else {

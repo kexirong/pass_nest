@@ -52,11 +52,10 @@ class AccountActionView extends StatelessWidget {
               icon: const Icon(Icons.save),
               onPressed: () {
                 if (!_formKey.currentState!.validate()) {
-                  Get.rawSnackbar(message: 'Processing Data');
                   return;
                 }
 
-                Get.back(result: controller.assignAccount(account));
+                Get.back(result: controller.assignToAccount(account));
               },
             ),
           ],

@@ -52,6 +52,15 @@ class DataProviderService extends GetxService {
     return await SettingStore().getWebdavConfig(await db);
   }
 
+  Future<void> setSyncMethod(SyncMethod method) async {
+    await SettingStore().setSyncMethod(await db, method.name);
+  }
+
+  Future<SyncMethod> getSyncMethod() async {
+    var method = await SettingStore().getSyncMethod(await db);
+    return SyncMethod.values.firstWhere((e) => e.name == method, orElse: () => SyncMethod.off);
+  }
+
   Future<List<AccountGroup>> getAccountGroups() async {
     return await AccountGroupStore().getAll(await db);
   }

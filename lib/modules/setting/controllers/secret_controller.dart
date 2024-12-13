@@ -21,6 +21,16 @@ class SecretController extends GetxController {
     await _configService.setMainSecret(secret);
   }
 
+  Future<void> addSecret(String secret) async {
+    await _configService.addSecret(secret);
+    update();
+  }
+
+  Future<void> deleteSecret(String secret) async {
+    await _configService.deleteSecret(secret);
+    update();
+  }
+
   void reset() {
     oldMainSecret.text = '';
     newMainSecret.text = '';
@@ -40,6 +50,7 @@ class SecretController extends GetxController {
   void onClose() {
     oldMainSecret.dispose();
     newMainSecret.dispose();
+    confirmNewMainSecret.dispose();
     super.onClose();
   }
 }
