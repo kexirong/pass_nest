@@ -21,6 +21,7 @@ class SettingDrawer extends StatelessWidget {
             leading: const Icon(Icons.password),
             title: const Text('加密'),
             onTap: () {
+              Get.back();
               Get.toNamed(Paths.settingSecret);
             },
           ),
@@ -30,6 +31,7 @@ class SettingDrawer extends StatelessWidget {
             leading: const Icon(Icons.sync),
             title: const Text('同步'),
             onTap: () {
+              Get.back();
               Get.toNamed(Paths.settingWebdav);
             },
           ),
@@ -37,7 +39,10 @@ class SettingDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('关于'),
-            onTap: () {},
+            onTap: () {
+              Get.back();
+              Get.toNamed(Paths.settingInfo);
+            },
           ),
         ],
       ),

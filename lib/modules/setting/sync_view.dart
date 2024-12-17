@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pass_nest/models/webdav_config.dart';
+import 'package:pass_nest/services/webdav/sync_webdav.dart';
 import 'controllers/sync_controller.dart';
 
 class SettingSync extends StatelessWidget {
@@ -25,7 +26,7 @@ class SettingSync extends StatelessWidget {
             child: Column(
               children: [
                 Card.filled(
-                    margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+                    margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
                     child: Row(
                       children: [
                         const SizedBox(width: 8),
@@ -35,9 +36,11 @@ class SettingSync extends StatelessWidget {
                           value: controller.syncMethod,
                           icon: const Icon(Icons.arrow_downward),
                           elevation: 16,
-                          onChanged: (SyncMethod? value) {
+                          onChanged: (SyncMethod? value) async {
                             controller.syncMethod = value;
-                            controller.update();
+
+                            controller.saveSyncMethod();
+                            Get.rawSnackbar(message: '设置成功');
                           },
                           items: SyncMethod.values
                               .map<DropdownMenuItem<SyncMethod>>((SyncMethod value) {
@@ -54,7 +57,7 @@ class SettingSync extends StatelessWidget {
                   title: const Text('Webdav'),
                 ),
                 Card.filled(
-                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Form(
@@ -100,14 +103,32 @@ class SettingSync extends StatelessWidget {
                             controller: controller.webdav.path,
                           ),
                           Container(
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                if (!_formKey.currentState!.validate()) {
+                                  return;
+                                }
+                                var test = await controller.webdav.ping();
+                                if (test) {
+                                  Get.rawSnackbar(message: '连接成功');
+                                } else {
+                                  Get.rawSnackbar(message: '请检查配置');
+                                }
+                              },
+                              child: const Text('测试'),
+                            ),
+                          ),
+                          SizedBox(
                             width: double.infinity,
-                            padding: const EdgeInsets.only(top: 16),
                             child: OutlinedButton(
                               onPressed: () async {
                                 if (!_formKey.currentState!.validate()) {
                                   return;
                                 }
                                 await controller.saveWebdav();
+                                Get.find<SyncWebdavService>().clientClose();
                                 Get.rawSnackbar(message: '保存成功');
                               },
                               child: const Text('保存'),
@@ -117,7 +138,20 @@ class SettingSync extends StatelessWidget {
                       ),
                     ),
                   ),
-                )
+                ),
+                  Card.filled(
+                    margin: const EdgeInsets.all(16),
+                    child:   Container(
+                      padding: const EdgeInsets.all( 8),
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () async {
+
+                        },
+                        child: const Text('立即同步'),
+                      ),
+                    ) ,
+                  )
               ],
             ),
           );

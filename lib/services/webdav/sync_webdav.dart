@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:pass_nest/models/webdav_config.dart';
 
 import '../../models/account/account_group.dart';
 import '../../models/account/account.dart';
@@ -17,7 +18,7 @@ import 'webdav.dart';
 
 const lockFile = '.lock';
 
-class SyncWebdav extends GetxService {
+class SyncWebdavService extends GetxService {
   final _dataProvider = Get.find<DataProviderService>();
   final _configService = Get.find<ConfigService>();
   final _accountsService = Get.find<AccountsService>();
@@ -62,7 +63,7 @@ class SyncWebdav extends GetxService {
   }
 
   void loop() {
-    timer = Timer.periodic(const Duration(seconds: 5), (timer) => callbackSync(timer));
+    timer = Timer.periodic(const Duration(seconds: 30), (timer) => callbackSync(timer));
   }
 
   void stop() {
@@ -79,12 +80,16 @@ class SyncWebdav extends GetxService {
     if (DateTime.now().isBefore(nextTime)) {
       return;
     }
+    print('callbackSync&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');
     if (await sync()) {
+      print('sync completed');
       lastTime = DateTime.now();
     }
   }
 
   Future<bool> sync() async {
+    var method = await _configService.getSyncMethod();
+    if (method != SyncMethod.webdav) return false;
     var client_ = await client;
     if (client_ == null) return false;
     try {
@@ -102,11 +107,21 @@ class SyncWebdav extends GetxService {
 
       var records = await _dataProvider.getChangeRecords();
       var lzRecords = zipRecords(records);
-      var ret = await client_.download('change_records_mate');
-      var cRecords = _toRecords(json.decode(ret));
+      Map<String, ChangeRecord> cRecords;
+      try {
+        var ret = await client_.download('change_records_mate');
+        cRecords = _toRecords(json.decode(ret));
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) {
+          rethrow;
+        }
+        cRecords = {};
+      }
 
       var downWait = diffRecords(lzRecords, cRecords);
+      print(downWait);
       var upWait = diffRecords(cRecords, lzRecords);
+      print(upWait);
       for (var down in downWait) {
         var itemStr = await client_.download("${down.itemType.name}_${down.id}");
         var item = jsonDecode(itemStr);
@@ -182,9 +197,11 @@ class SyncWebdav extends GetxService {
   Future<void> unlock(WebdavClient client) async {
     await client.remove(lockFile);
   }
-}
 
-// var syncWebdav = SyncWebdav();
+  void clientClose() {
+    _client?.close();
+  }
+}
 
 Map<String, ChangeRecord> _toRecords(List<dynamic> jsonInstance) {
   List<ChangeRecord> records = [];

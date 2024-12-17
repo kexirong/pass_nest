@@ -8,6 +8,7 @@ import '../modules/setting/secret_view.dart';
 import '../modules/account/accounts_home_view.dart';
 import '../modules/account/account_action_view.dart';
 import '../modules/setting/sync_view.dart';
+import '../modules/setting/info_view.dart';
 
 part 'app_paths.dart';
 
@@ -48,6 +49,10 @@ class AppPages {
     GetPage(
       name: Paths.settingWebdav,
       page: () => SettingSync(),
+    ),
+    GetPage(
+      name: Paths.settingInfo,
+      page: () => const SettingInfo(),
     ),
   ];
 }

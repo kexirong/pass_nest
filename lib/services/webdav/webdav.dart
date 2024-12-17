@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:path/path.dart' as p;
 
@@ -65,6 +65,18 @@ class WebdavClient {
 
   void close() {
     _isClose = true;
+  }
+
+  Future<bool> ping() async {
+    try {
+      await _client.ping();
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print(e);
+      }
+      return false;
+    }
   }
 
   webdav.Client get client => _client;

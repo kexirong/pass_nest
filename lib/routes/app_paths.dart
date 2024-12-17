@@ -13,4 +13,5 @@ abstract class Paths {
 
   static const settingSecret = '/setting/secret';
   static const settingWebdav = '/setting/webdav';
+  static const settingInfo = '/setting/info';
 }

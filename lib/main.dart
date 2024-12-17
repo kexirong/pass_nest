@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+
+import 'services/webdav/sync_webdav.dart';
 import 'services/accounts_service.dart';
 import 'services/db/data_provider.dart';
 import 'services/groups_service.dart';
@@ -31,6 +33,7 @@ void main() async {
           }
           Get.put(AccountsService());
           Get.put(GroupsService());
+          Get.put(SyncWebdavService()).start();
 
           if (kDebugMode) {
             print('All lazyPut started...');

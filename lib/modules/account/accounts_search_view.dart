@@ -16,8 +16,9 @@ class AccountsSearchView extends StatelessWidget {
     if (kDebugMode) {
       print("###################build home###########################");
     }
-    String filter = '';
+    RxString filter = RxString('');
     var controller = Get.put(AccountsController());
+    debounce(filter, (_) => controller.update());
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
@@ -42,8 +43,8 @@ class AccountsSearchView extends StatelessWidget {
               ),
             ),
             onChanged: (value) {
-              filter = value.trim();
-              controller.update();
+              filter.value = value.trim();
+              // controller.update();
             },
           ),
         ),

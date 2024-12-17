@@ -27,7 +27,7 @@ class ChangeRecordStore {
   }
 
   Future<String?> add(DatabaseClient dbc, ChangeRecord cr) async {
-    return await _store.record(cr.id).add(dbc, jsonEncode(cr));
+    return await _store.add(dbc, jsonEncode(cr));
   }
 // delete is not allowed
 // Future<void> delete

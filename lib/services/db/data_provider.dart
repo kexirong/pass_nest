@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -133,9 +132,6 @@ class DataProviderService extends GetxService {
   }
 
   Future<Database> _init() async {
-    if (kDebugMode) {
-      print('database init+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-    }
     await _db?.close();
     var path = await _buildDatabasesPath();
     return _db = await databaseFactory.openDatabase(path);

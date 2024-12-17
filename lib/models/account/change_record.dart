@@ -22,11 +22,11 @@ class ChangeRecord {
         timestamp = json['timestamp'];
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'id': id,
-    'record_type': recordType.index,
-    'item_type': itemType.index,
-    'timestamp': timestamp
-  };
+        'id': id,
+        'record_type': recordType.index,
+        'item_type': itemType.index,
+        'timestamp': timestamp
+      };
 
   @override
   String toString() {
@@ -54,17 +54,19 @@ Map<ID, ChangeRecord> zipRecords(List<ChangeRecord> records) {
 
 List<ChangeRecord> diffRecords(Map<ID, ChangeRecord> records1, Map<ID, ChangeRecord> records2) {
   List<ChangeRecord> recs = [];
-  for (var key in records2.keys) {
-    var item = records1[key];
-    if (item == null) {
-      recs.add(records2[key]!);
+  for (var item2 in records2.values) {
+    var item1 = records1[item2.id];
+    if (item1 == null) {
+      print('(item == null)');
+      recs.add(item2);
       continue;
     }
-    if (item.timestamp > records2[key]!.timestamp ||
-        item.recordType.index > records2[key]!.recordType.index) {
-      continue;
+    print('item1: $item1');
+    print('item2: $item2');
+    if (item2.timestamp > item1.timestamp || item2.recordType.index > item1.recordType.index) {
+      print('   recs.add(records2[key]!);');
+      recs.add(item2);
     }
-    recs.add(records2[key]!);
   }
   return recs;
 }

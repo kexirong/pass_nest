@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../models/webdav_config.dart';
 
 import '../../../services/config_service.dart';
+import '../../../services/webdav/webdav.dart';
 
 class SyncController extends GetxController {
   final _configService = Get.find<ConfigService>();
@@ -16,6 +17,10 @@ class SyncController extends GetxController {
       webdav.assign(conf);
       update();
     });
+    _configService.getSyncMethod().then((method) {
+      syncMethod = method;
+      update();
+    });
     super.onInit();
   }
 
@@ -23,6 +28,11 @@ class SyncController extends GetxController {
     final conf = webdav.toWebdavConfig();
     if (conf == null) return;
     await _configService.setWebdavConfig(conf);
+  }
+
+  Future<void> saveSyncMethod() async {
+    await _configService.setSyncMethod(syncMethod ?? SyncMethod.off);
+    update();
   }
 
   @override
@@ -58,6 +68,13 @@ class _Webdav {
       password.text.trim(),
       path.text.trim(),
     );
+  }
+
+  Future<bool> ping() async {
+    var conf = toWebdavConfig();
+    if (conf == null) return false;
+    var client = WebdavClient(conf.url, conf.user, conf.password, path: conf.path);
+    return await client.ping();
   }
 
   void assign(WebdavConfig conf) {

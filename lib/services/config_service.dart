@@ -23,6 +23,14 @@ class ConfigService extends GetxService {
     await loadSecretsConfig();
   }
 
+  Future<SyncMethod> getSyncMethod() async {
+    return await _dataProvider.getSyncMethod();
+  }
+
+  Future<void> setSyncMethod(SyncMethod method) async {
+    return await _dataProvider.setSyncMethod(method);
+  }
+
   Future<WebdavConfig?> getWebdavConfig() async {
     return await _dataProvider.getWebdavConfig();
   }
@@ -37,7 +45,6 @@ class ConfigService extends GetxService {
 
   Future<void> loadSecretsConfig() async {
     var secrets = await _dataProvider.getSecrets();
-    // _secretsConfig.addAll(secrets);
     for (var s in secrets) {
       var mKey_ = md5.convert(utf8.encode(s.secret)).toString();
       _secretsCache[mKey_] = s;
