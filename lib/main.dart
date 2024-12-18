@@ -33,7 +33,7 @@ void main() async {
           }
           Get.put(AccountsService());
           Get.put(GroupsService());
-          Get.put(SyncWebdavService()).start();
+          Get.put(SyncWebdavService());
 
           if (kDebugMode) {
             print('All lazyPut started...');

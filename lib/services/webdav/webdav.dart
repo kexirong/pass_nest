@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:path/path.dart' as p;
@@ -43,21 +44,27 @@ class WebdavClient {
     return result;
   }
 
-  Future<String> download(String name, {String? path}) async {
+  Future<String?> read(String name, {String? path}) async {
     path ??= rootPath;
     var fPath = p.join(path, name);
-
-    var bytes = await _client.read(fPath);
-    return String.fromCharCodes(bytes);
+    try {
+      var bytes = await _client.read(fPath);
+      return String.fromCharCodes(bytes);
+    } on DioException catch (e) {
+      if (e.response?.statusCode != 404) {
+        rethrow;
+      }
+      return null;
+    }
   }
 
-  Future<void> upload(String name, String data, {String? path}) async {
+  Future<void> write(String name, String data, {String? path}) async {
     path ??= rootPath;
     var fPath = p.join(path, name);
     await _client.write(fPath, Uint8List.fromList(data.codeUnits));
   }
 
-  Future<void> remove(String name, {String? path}) async {
+  Future<void> delete(String name, {String? path}) async {
     path ??= rootPath;
     var fPath = p.join(path, name);
     return await _client.removeAll(fPath);

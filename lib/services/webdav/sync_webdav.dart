@@ -18,27 +18,48 @@ import 'webdav.dart';
 
 const lockFile = '.lock';
 
+// 使用启动同步，编辑同步，不采用定时同步
 class SyncWebdavService extends GetxService {
   final _dataProvider = Get.find<DataProviderService>();
   final _configService = Get.find<ConfigService>();
   final _accountsService = Get.find<AccountsService>();
   final _groupsService = Get.find<GroupsService>();
-  bool isInit = false;
-  bool isRunning = false;
-  Duration _duration = const Duration(seconds: 30);
-  late DateTime lastTime;
 
-  Timer? timer;
+  bool _isSyncing = false;
+  bool _needSync = false;
+  final _duration = const Duration(seconds: 30);
+  final _syncController = StreamController<void>();
 
-  DateTime get nextTime {
-    return lastTime.add(_duration);
+  @override
+  void onInit() {
+    _syncController.stream.listen(
+      (_) {
+        if (_isSyncing) {
+          _needSync = true;
+          return;
+        }
+        _sync().then((value) {});
+      },
+      onError: (error) {
+        print('Error: $error');
+      },
+    );
+
+    super.onInit();
   }
 
-  WebdavClient? _client;
+  @override
+  void onClose() {
+    _syncController.close();
+    // _doSyncController.close();
+    super.onClose();
+  }
 
-  Future<WebdavClient?> get client async {
-    if (_client != null && !(_client!.isClose)) {
-      return _client;
+  WebdavClient? _webdavClient;
+
+  Future<WebdavClient?> get webdavClient async {
+    if (_webdavClient != null && !(_webdavClient!.isClose)) {
+      return _webdavClient;
     }
     return await _getClient();
   }
@@ -46,115 +67,85 @@ class SyncWebdavService extends GetxService {
   Future<WebdavClient?> _getClient() async {
     var conf = await _configService.getWebdavConfig();
     if (conf == null) return null;
-    _client = WebdavClient(conf.url, conf.user, conf.password, path: conf.path);
-    return _client;
+    return _webdavClient = WebdavClient(conf.url, conf.user, conf.password, path: conf.path);
   }
 
-  void start({Duration? duration}) {
-    isInit = false;
-    if (duration != null) {
-      _duration = duration;
-    }
-    isInit = true;
-    if (timer == null) {
-      lastTime = DateTime.now().subtract(_duration);
-      loop();
-    }
-  }
-
-  void loop() {
-    timer = Timer.periodic(const Duration(seconds: 30), (timer) => callbackSync(timer));
-  }
-
-  void stop() {
-    for (var i = 0; i < 3; i++) {
-      if (!isRunning) {
-        timer?.cancel();
-        return;
-      }
-      Timer(const Duration(seconds: 1), () {});
-    }
-  }
-
-  void callbackSync(Timer t) async {
-    if (DateTime.now().isBefore(nextTime)) {
-      return;
-    }
-    print('callbackSync&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');
-    if (await sync()) {
-      print('sync completed');
-      lastTime = DateTime.now();
-    }
-  }
-
-  Future<bool> sync() async {
+  Future<bool> _sync() async {
     var method = await _configService.getSyncMethod();
     if (method != SyncMethod.webdav) return false;
-    var client_ = await client;
-    if (client_ == null) return false;
+    var client = await webdavClient;
+    if (client == null) return false;
     try {
-      if (!isInit || isRunning) {
-        if (kDebugMode) {
-          print('sync skip');
-        }
-        return false;
-      }
+      _isSyncing = true;
 
-      if (await hasLock(client_)) return false;
-      isRunning = true;
+      if (await _hasLock(client)) return false;
 
-      await lock(client_);
+      await _lock(client);
 
       var records = await _dataProvider.getChangeRecords();
       var lzRecords = zipRecords(records);
-      Map<String, ChangeRecord> cRecords;
-      try {
-        var ret = await client_.download('change_records_mate');
-        cRecords = _toRecords(json.decode(ret));
-      } on DioException catch (e) {
-        if (e.response?.statusCode != 404) {
-          rethrow;
-        }
-        cRecords = {};
-      }
 
-      var downWait = diffRecords(lzRecords, cRecords);
-      print(downWait);
-      var upWait = diffRecords(cRecords, lzRecords);
-      print(upWait);
-      for (var down in downWait) {
-        var itemStr = await client_.download("${down.itemType.name}_${down.id}");
-        var item = jsonDecode(itemStr);
-        switch (down.itemType) {
-          case ItemType.group:
-            var ag = AccountGroup.fromJson(item);
-            await _groupsService.addGroup(ag);
-          case ItemType.account:
-            BaseAccount acct;
-            if (item.containsKey('cipher')) {
-              acct = EncryptAccount.fromJson(item);
-            } else {
-              acct = PlainAccount.fromJson(item);
+      var ret = await client.read('change_records_mate');
+      Map<String, ChangeRecord> cRecords = ret == null ? {} : _toRecords(json.decode(ret));
+
+      final syncEvents = diffRecords(lzRecords, cRecords);
+
+      for (var event in syncEvents) {
+        switch (event.action) {
+          case SyncAction.upload:
+            String dataStr;
+            switch (event.itemType) {
+              case ItemType.group:
+                dataStr = _groupsService.getGroupByID(event.itemID).toString();
+
+              case ItemType.account:
+                dataStr = _accountsService.getAccountByID(event.itemID).toString();
             }
-            await _accountsService.addAccount(acct);
+            await client.write("${event.itemType.name}_${event.itemID}", dataStr);
+          case SyncAction.add:
+          case SyncAction.update:
+            var itemStr = await client.read("${event.itemType.name}_${event.itemID}");
+            if (itemStr == null) {
+              continue;
+            }
+            var item = jsonDecode(itemStr);
+            switch (event.itemType) {
+              case ItemType.group:
+                var ag = AccountGroup.fromJson(item);
+                await (event.action == SyncAction.add
+                    ? _groupsService.addGroup(ag)
+                    : _groupsService.updateGroup(ag));
+              case ItemType.account:
+                BaseAccount acct;
+                if (item.containsKey('cipher')) {
+                  acct = EncryptAccount.fromJson(item);
+                } else {
+                  acct = PlainAccount.fromJson(item);
+                }
+                await (event.action == SyncAction.add
+                    ? _accountsService.addAccount(acct)
+                    : _accountsService.updateAccount(acct));
+            }
+          case SyncAction.delete:
+            switch (event.itemType) {
+              case ItemType.group:
+                var group = _groupsService.getGroupByID(event.itemID);
+                if (group != null) {
+                  await _groupsService.deleteGroup(group);
+                }
+              case ItemType.account:
+                var acct = _accountsService.getAccountByID(event.itemID);
+                if (acct != null) {
+                  await _accountsService.deleteAccount(acct);
+                }
+            }
+          case SyncAction.remoteDelete:
+            await client.delete("${event.itemType.name}_${event.itemID}");
         }
       }
-      for (var up in upWait) {
-        String dataStr;
-        switch (up.itemType) {
-          case ItemType.group:
-            //need fix
-            dataStr = _groupsService.getGroupByID(up.id).toString();
+      var lRecords = await _dataProvider.getChangeRecords();
 
-          case ItemType.account:
-            //need fix
-            dataStr = _accountsService.getAccountByID(up.id).toString();
-        }
-        await client_.upload("${up.itemType.name}_${up.id}", dataStr);
-      }
-      var uRecords = lzRecords.values.toList();
-      uRecords.addAll(upWait);
-      await client_.upload("change_records_mate", jsonEncode(uRecords));
+      await client.write("change_records_mate", jsonEncode(zipRecords(lRecords).values.toList()));
 
       return true;
     } catch (e) {
@@ -163,44 +154,73 @@ class SyncWebdavService extends GetxService {
       }
       return false;
     } finally {
-      await unlock(client_);
-      isRunning = false;
+      try {
+        await _unlock(client);
+      } finally {
+        _isSyncing = false;
+        if (_needSync) {
+          _syncController.sink.add(null);
+          _needSync = false;
+        }
+      }
     }
   }
 
-  Future<bool> hasLock(WebdavClient client) async {
-    try {
-      var ret = await client.download(lockFile);
-      var jRet = json.decode(ret);
-      int expired = jRet['expired'];
-      if (DateTime.now().millisecondsSinceEpoch > expired) {
-        return false;
-      }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        return false;
-      }
+  Future<bool> _hasLock(WebdavClient client) async {
+    var ret = await client.read(lockFile);
+    if (ret == null) return false;
+    var jRet = json.decode(ret);
+    int expired = jRet['expired'];
+    if (DateTime.now().millisecondsSinceEpoch > expired) {
+      return false;
     }
+
     return true;
   }
 
-  Future<void> lock(WebdavClient client) async {
+  Future<void> _lock(WebdavClient client) async {
     var deviceID = _configService.deviceID;
 
     var lockData = <String, dynamic>{
       'device_id': deviceID,
       'expired': DateTime.now().add(_duration).millisecondsSinceEpoch,
     };
-    await client.upload(lockFile, json.encode(lockData));
+    await client.write(lockFile, json.encode(lockData));
   }
 
-  Future<void> unlock(WebdavClient client) async {
-    await client.remove(lockFile);
+  Future<void> _unlock(WebdavClient client) async {
+    await client.delete(lockFile);
   }
 
   void clientClose() {
-    _client?.close();
+    _webdavClient?.close();
   }
+}
+
+enum SyncAction { add, update, delete, upload, remoteDelete }
+
+class SyncEvent {
+  String itemID;
+  ItemType itemType;
+  SyncAction action;
+
+  SyncEvent(this.itemID, this.itemType, this.action);
+}
+
+Map<ID, ChangeRecord> zipRecords(List<ChangeRecord> records) {
+  Map<ID, ChangeRecord> recs = {};
+  for (var item in records) {
+    var value = recs[item.id];
+    if (value == null) {
+      recs[item.id] = item;
+      continue;
+    }
+    if (value.recordType.index >= item.recordType.index && value.timestamp >= item.timestamp) {
+      continue;
+    }
+    recs[item.id] = item;
+  }
+  return recs;
 }
 
 Map<String, ChangeRecord> _toRecords(List<dynamic> jsonInstance) {
@@ -210,4 +230,47 @@ Map<String, ChangeRecord> _toRecords(List<dynamic> jsonInstance) {
     records.add(rm);
   }
   return zipRecords(records);
+}
+
+List<SyncEvent> diffRecords(
+    Map<ID, ChangeRecord> localRecords, Map<ID, ChangeRecord> remoteRecords) {
+  List<SyncEvent> ses = [];
+
+  remoteRecords.forEach((key, rItem) {
+    var lItem = localRecords[key];
+    if (lItem == null) {
+      if (rItem.recordType != RecordType.delete) {
+        ses.add(SyncEvent(key, rItem.itemType, SyncAction.add));
+      }
+      return;
+    }
+    if (rItem.recordType.index >= lItem.recordType.index && rItem.timestamp >= lItem.timestamp) {
+      SyncAction action;
+      switch (lItem.recordType) {
+        case RecordType.delete:
+          action = SyncAction.delete;
+        case RecordType.create:
+          action = SyncAction.add;
+        case RecordType.update:
+          action = SyncAction.update;
+      }
+      ses.add(SyncEvent(
+          key, rItem.itemType, lItem.recordType == RecordType.delete ? SyncAction.delete : action));
+    }
+  });
+  localRecords.forEach((key, lItem) {
+    var rItem = remoteRecords[key];
+    if (rItem == null) {
+      if (lItem.recordType != RecordType.delete) {
+        ses.add(SyncEvent(key, lItem.itemType, SyncAction.upload));
+      }
+      return;
+    }
+    if (lItem.recordType.index >= rItem.recordType.index && lItem.timestamp >= rItem.timestamp) {
+      ses.add(SyncEvent(key, lItem.itemType,
+          rItem.recordType == RecordType.delete ? SyncAction.remoteDelete : SyncAction.upload));
+    }
+  });
+
+  return ses;
 }
