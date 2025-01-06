@@ -82,7 +82,7 @@ class AccountsService extends GetxService {
       }
       //使用主密钥进行加密
       acct = (acct as PlainAccount).encrypt(mSecret);
-      await _dataProvider.accountUpdate(acct);
+      await updateAccount(acct);
     }
     return true;
   }

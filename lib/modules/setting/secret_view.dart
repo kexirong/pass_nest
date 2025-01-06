@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../services/accounts_service.dart';
 import 'controllers/secret_controller.dart';
 
 class SettingSecret extends StatelessWidget {
@@ -144,7 +146,7 @@ class SettingSecret extends StatelessWidget {
                           );
                         },
                       ),
-                      const Divider(height: 0),
+                      attSecrets.isNotEmpty ? const Divider(height: 0) : const SizedBox(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: <Widget>[
@@ -185,6 +187,25 @@ class SettingSecret extends StatelessWidget {
                     ],
                   ),
                 ),
+                Card.filled(
+                  margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        if (kDebugMode) {
+                          print('mainSecret:${controller.mainSecret}');
+                        }
+                        var ret = await Get.find<AccountsService>().reEncryptAccounts();
+                        if (ret) {
+                          Get.rawSnackbar(message: '重新加密完成');
+                        }
+                      },
+                      child: const Text('重新加密'),
+                    ),
+                  ),
+                )
               ],
             ),
           ),

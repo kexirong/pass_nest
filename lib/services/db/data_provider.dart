@@ -65,7 +65,7 @@ class DataProviderService extends GetxService {
   }
 
   Future<void> addAccountGroup(AccountGroup group) async {
-    var rm = ChangeRecord(group.id, ItemType.group, RecordType.create);
+    var rm = ChangeRecord(group.id, ItemType.group, RecordType.create, group.createdAt);
     var dbc = await db;
     await dbc.transaction((txn) async {
       await AccountGroupStore().add(txn, group);
@@ -74,8 +74,7 @@ class DataProviderService extends GetxService {
   }
 
   Future<void> updateAccountGroup(AccountGroup group) async {
-    group.updatedAt = DateTime.now().millisecondsSinceEpoch;
-    var rm = ChangeRecord(group.id, ItemType.group, RecordType.update);
+    var rm = ChangeRecord(group.id, ItemType.group, RecordType.update, group.updatedAt);
     var dbc = await db;
     await dbc.transaction((txn) async {
       await AccountGroupStore().update(txn, group);
@@ -84,7 +83,8 @@ class DataProviderService extends GetxService {
   }
 
   Future<void> deleteAccountGroup(AccountGroup group) async {
-    var rm = ChangeRecord(group.id, ItemType.group, RecordType.delete);
+    var rm = ChangeRecord(
+        group.id, ItemType.group, RecordType.delete, DateTime.now().millisecondsSinceEpoch);
     var dbc = await db;
     await dbc.transaction((txn) async {
       await AccountGroupStore().delete(txn, group);
@@ -97,7 +97,7 @@ class DataProviderService extends GetxService {
   }
 
   Future<void> addAccount(BaseAccount account) async {
-    var rm = ChangeRecord(account.id, ItemType.account, RecordType.create);
+    var rm = ChangeRecord(account.id, ItemType.account, RecordType.create, account.createdAt);
     var dbc = await db;
     await dbc.transaction((txn) async {
       await AccountStore().add(txn, account);
@@ -106,8 +106,7 @@ class DataProviderService extends GetxService {
   }
 
   Future<void> accountUpdate(BaseAccount account) async {
-    account.updatedAt = DateTime.now().millisecondsSinceEpoch;
-    var rm = ChangeRecord(account.id, ItemType.account, RecordType.update);
+    var rm = ChangeRecord(account.id, ItemType.account, RecordType.update, account.updatedAt);
     var dbc = await db;
     await dbc.transaction((txn) async {
       await AccountStore().update(txn, account);
@@ -116,10 +115,8 @@ class DataProviderService extends GetxService {
   }
 
   Future<void> accountDelete(BaseAccount account) async {
-    // int index = _accounts.indexWhere((el) => (el.id == accountID));
-    //
-    // if (index < 0) return;
-    var rm = ChangeRecord(account.id, ItemType.account, RecordType.delete);
+    var rm = ChangeRecord(
+        account.id, ItemType.account, RecordType.delete, DateTime.now().millisecondsSinceEpoch);
     var dbc = await db;
     await dbc.transaction((txn) async {
       await AccountStore().delete(txn, account);

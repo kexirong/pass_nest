@@ -12,8 +12,7 @@ class ChangeRecord {
   RecordType recordType;
   int timestamp;
 
-  ChangeRecord(this.id, this.itemType, this.recordType)
-      : timestamp = DateTime.now().millisecondsSinceEpoch;
+  ChangeRecord(this.id, this.itemType, this.recordType, this.timestamp);
 
   ChangeRecord.fromJson(Map<String, dynamic> json)
       : id = json['id'],

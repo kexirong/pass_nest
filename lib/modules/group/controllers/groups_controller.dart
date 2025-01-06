@@ -3,6 +3,7 @@ import 'package:pass_nest/services/accounts_service.dart';
 
 import '../../../models/account/account_group.dart';
 import '../../../services/groups_service.dart';
+import '../../../services/webdav/sync_webdav.dart';
 
 class GroupsController extends GetxController {
   final _groupsService = Get.find<GroupsService>();
@@ -27,5 +28,11 @@ class GroupsController extends GetxController {
   Future<void> deleteGroup(AccountGroup group) async {
     await _groupsService.deleteGroup(group);
     update();
+  }
+
+  @override
+  void update([List<Object>? ids, bool condition = true]) {
+    super.update(ids, condition);
+    Get.find<SyncWebdavService>().notifySync();
   }
 }

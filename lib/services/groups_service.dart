@@ -34,6 +34,7 @@ class GroupsService extends GetxService {
   Future<void> updateGroup(AccountGroup group) async {
     int index = _groups.indexWhere((el) => (el.id == group.id));
     if (index < 0) return;
+    group.updatedAt = DateTime.now().millisecondsSinceEpoch;
     await _dataProvider.updateAccountGroup(group);
     _groups[index] = group;
   }

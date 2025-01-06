@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:pass_nest/models/webdav_config.dart';
@@ -38,10 +37,20 @@ class SyncWebdavService extends GetxService {
           _needSync = true;
           return;
         }
-        _sync().then((value) {});
+        _sync().then((value) {
+          if (value != null && !value) {
+            var duration = _needSync ? Duration.zero : const Duration(seconds: 5);
+            Timer(duration, () {
+              print('timer  _syncController.sink.add(null);');
+              _syncController.sink.add(null);
+            });
+          }
+        });
       },
       onError: (error) {
-        print('Error: $error');
+        if (kDebugMode) {
+          print('Error: $error');
+        }
       },
     );
 
@@ -70,11 +79,16 @@ class SyncWebdavService extends GetxService {
     return _webdavClient = WebdavClient(conf.url, conf.user, conf.password, path: conf.path);
   }
 
-  Future<bool> _sync() async {
+  void notifySync() {
+    _syncController.sink.add(null);
+  }
+
+  Future<bool?> _sync() async {
+    print('start sync========================================================');
     var method = await _configService.getSyncMethod();
-    if (method != SyncMethod.webdav) return false;
+    if (method != SyncMethod.webdav) return null;
     var client = await webdavClient;
-    if (client == null) return false;
+    if (client == null) return null;
     try {
       _isSyncing = true;
 
@@ -89,7 +103,9 @@ class SyncWebdavService extends GetxService {
       Map<String, ChangeRecord> cRecords = ret == null ? {} : _toRecords(json.decode(ret));
 
       final syncEvents = diffRecords(lzRecords, cRecords);
-
+      if (kDebugMode) {
+        print('syncEvents:$syncEvents');
+      }
       for (var event in syncEvents) {
         switch (event.action) {
           case SyncAction.upload:
@@ -152,6 +168,7 @@ class SyncWebdavService extends GetxService {
       if (kDebugMode) {
         print(e);
       }
+      print('sync catch~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
       return false;
     } finally {
       try {
@@ -205,6 +222,11 @@ class SyncEvent {
   SyncAction action;
 
   SyncEvent(this.itemID, this.itemType, this.action);
+
+  @override
+  String toString() {
+    return "{'item_id':$itemID,'item_type':$itemType,'action':${action.name}";
+  }
 }
 
 Map<ID, ChangeRecord> zipRecords(List<ChangeRecord> records) {
@@ -244,7 +266,7 @@ List<SyncEvent> diffRecords(
       }
       return;
     }
-    if (rItem.recordType.index >= lItem.recordType.index && rItem.timestamp >= lItem.timestamp) {
+    if (rItem.recordType.index > lItem.recordType.index || rItem.timestamp > lItem.timestamp) {
       SyncAction action;
       switch (lItem.recordType) {
         case RecordType.delete:
@@ -266,7 +288,7 @@ List<SyncEvent> diffRecords(
       }
       return;
     }
-    if (lItem.recordType.index >= rItem.recordType.index && lItem.timestamp >= rItem.timestamp) {
+    if (lItem.recordType.index > rItem.recordType.index || lItem.timestamp > rItem.timestamp) {
       ses.add(SyncEvent(key, lItem.itemType,
           rItem.recordType == RecordType.delete ? SyncAction.remoteDelete : SyncAction.upload));
     }

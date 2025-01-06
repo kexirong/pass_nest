@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../models/account/account.dart';
 import '../../../services/accounts_service.dart';
+import '../../../services/webdav/sync_webdav.dart';
 
 class AccountsController extends GetxController {
   final _accountsService = Get.find<AccountsService>();
@@ -29,6 +30,12 @@ class AccountsController extends GetxController {
 
   String? getSecret(String mKey) {
     return _accountsService.getSecret(mKey);
+  }
+
+  @override
+  void update([List<Object>? ids, bool condition = true]) {
+    super.update(ids, condition);
+    Get.find<SyncWebdavService>().notifySync();
   }
 
   @override

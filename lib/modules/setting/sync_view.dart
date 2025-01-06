@@ -139,19 +139,19 @@ class SettingSync extends StatelessWidget {
                     ),
                   ),
                 ),
-                  Card.filled(
-                    margin: const EdgeInsets.all(16),
-                    child:   Container(
-                      padding: const EdgeInsets.all( 8),
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () async {
-
-                        },
-                        child: const Text('立即同步'),
-                      ),
-                    ) ,
-                  )
+                Card.filled(
+                  margin: const EdgeInsets.all(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Get.find<SyncWebdavService>().notifySync();
+                      },
+                      child: const Text('立即同步'),
+                    ),
+                  ),
+                )
               ],
             ),
           );
